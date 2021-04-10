@@ -4,7 +4,7 @@ const { assert } = require('chai');
 
 let contractInstance;
 
-contract('CoinCoin', (account) => {
+contract('CoinCoin', (accounts) => {
   before(async () => {
     contractInstance = await CoinCoin.deployed();
   });
@@ -18,7 +18,7 @@ contract('CoinCoin', (account) => {
 
   describe('function getBalance()', () => {
     it('should return balance of account exists', async () => {
-      const balance = await contractInstance.getBalance(account[0]);
+      const balance = await contractInstance.getBalance(accounts[0]);
       assert.equal(balance, 0);
     });
     
@@ -38,7 +38,7 @@ contract('CoinCoin', (account) => {
 
   describe('function mint()', () => {
     it('should success if owner mint', async () => {
-      const _address = account[0];
+      const _address = accounts[0];
       const _amount = 1000;
 
       const balanceOfAccountBeforeMint = Number(await contractInstance.getBalance(_address));
@@ -51,8 +51,8 @@ contract('CoinCoin', (account) => {
     it('should faild if others mint', async () => {
       let errMsg;
       try {
-        await contractInstance.mint(account[1], 1000, {
-          from: account[2]
+        await contractInstance.mint(accounts[1], 1000, {
+          from: accounts[2]
         });
       }
       catch (e) {
@@ -66,8 +66,8 @@ contract('CoinCoin', (account) => {
   describe('function transfer()', () => {
     it('should transfer fail if account does not have enough money', async () => {
       let errMsg;
-      const _sender = account[8];
-      const _receiver = account[9];
+      const _sender = accounts[8];
+      const _receiver = accounts[9];
       const _amount = 1000000;
       try {
         await contractInstance.transfer(_receiver, _amount, {
@@ -81,8 +81,8 @@ contract('CoinCoin', (account) => {
     });
 
     it('should tranfer success if account have enough money', async () => {
-      const _sender = account[0];
-      const _receiver = account[9];
+      const _sender = accounts[0];
+      const _receiver = accounts[9];
       const _amount = 10;
 
       // Mint for sender
@@ -117,7 +117,5 @@ contract('CoinCoin', (account) => {
       );
     });
   });
-
-
 
 });
