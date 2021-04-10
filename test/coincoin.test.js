@@ -108,12 +108,12 @@ contract('CoinCoin', (accounts) => {
       assert.equal(
         balanceOfSenderAfterTransfer,
         balanceOfSenderBeforeTransfer - _amount,
-        'Minus balance of sender'
+        'Minus balance sender'
       );
       assert.equal(
         balanceOfReceiverAfterTransfer,
         balanceOfReceiverBeforeTransfer + _amount,
-        'Add balance of receiver'
+        'Add balance receiver'
       );
     });
   });
