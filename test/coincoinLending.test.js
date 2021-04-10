@@ -42,6 +42,7 @@ contract('CoinCoinLending', (accounts) => {
         from: ownerAddress
       });
       const balanceOfLender = Number(await coincoinInstance.getBalance(_lender));
+      const balanefOfLendingContract = Number(await coincoinInstance.getBalance(coincoinLendingInstance.address));
 
       // Step 2: Create offer
       const tx = await coincoinLendingInstance.createOffer(
@@ -61,7 +62,19 @@ contract('CoinCoinLending', (accounts) => {
 
       // Check balance of _lender after create offer
       const balanceOfLenderAfterCreateOffer = Number(await coincoinInstance.getBalance(_lender));
-      assert.equal(balanceOfLenderAfterCreateOffer, balanceOfLender - _amount);
+      assert.equal(
+        balanceOfLenderAfterCreateOffer,
+        balanceOfLender - _amount,
+        'Balance of lender decrease after create offer'
+      );
+
+      // Check balance of lending contract
+      const balanefOfLendingContractAfter = Number(await coincoinInstance.getBalance(coincoinLendingInstance.address));
+      assert.equal(
+        balanefOfLendingContractAfter,
+        balanefOfLendingContract + _amount,
+        'Balance of lending contract increase after lender create offer'
+      );
     });
 
     it('should error if lender does not have enough money', async () => {
