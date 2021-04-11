@@ -39,7 +39,7 @@ contract CoinCoinLending {
         uint256 _amountETH,
         uint256 _loanExpDate
     );
-    event OfferRepaid(uint256 _id);
+    event OfferRepaid(uint256 _id, uint256 _total);
 
     constructor(address _coincoinContractAddress) {
         coincoinContractAddress = _coincoinContractAddress;
@@ -97,10 +97,17 @@ contract CoinCoinLending {
 
     function repay(uint256 _id) public {
         Offer storage myOffer = offer[_id];
-        // TODO: Nếu trả trước hạn thì bị tính phí (5% / amount) + lãi trong _duration
-        uint256 totalAmount = myOffer.amount + getInterest(_id);
-
         require(msg.sender == myOffer.borrower, "You are not borrower");
+
+        uint256 totalAmount;
+        if (block.timestamp - myOffer.loanDate >= myOffer.loanExpDate) {
+            totalAmount = myOffer.amount + getInterest(_id);
+        } else {
+            totalAmount =
+                myOffer.amount +
+                getInterest(_id) +
+                ((myOffer.amount * 5) / 100);
+        }
 
         // Borrower tra coin cho contract
         CoinCoinInterface(coincoinContractAddress)
@@ -115,7 +122,7 @@ contract CoinCoinLending {
         // Transfer eth for borrower
         payable(msg.sender).transfer(myOffer.amountETH);
 
-        emit OfferRepaid(_id);
+        emit OfferRepaid(_id, totalAmount);
     }
 
     function getInterest(uint256 _id) public view returns (uint256) {

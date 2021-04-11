@@ -266,21 +266,40 @@ contract('CoinCoinLending', (accounts) => {
       const _lender = accounts[0];
       const _borrower = accounts[1];
 
-      const balanceEthOfBorrower = await web3.eth.getBalance(_borrower);
-      console.log(balanceEthOfBorrower)
+      const balanceOfLender = await coincoinInstance.getBalance(_lender);
+      const balanceEthOfBorrower = Number(await web3.eth.getBalance(_borrower));
+
+      // Mint for __borrower
+      await coincoinInstance.mint(_borrower, 100000, {
+        from: ownerAddress
+      });
       
+      // Repay
       const tx = await coincoinLendingInstance.repay(_offerId, {
         from: _borrower
       });
 
-      const balanceEthOfBorrowerAfter = await web3.eth.getBalance(_borrower);
-      console.log(balanceEthOfBorrowerAfter)
-
-
       // Check event
       truffleAssert.eventEmitted(tx, 'OfferRepaid', (ev) => {
+        // console.log(ev)
         return ev._id.toNumber() === _offerId;
       });
+
+      // Check lender's coin
+      const balanceOfLenderAfter = await coincoinInstance.getBalance(_lender);
+      assert.isAbove(
+        balanceOfLenderAfter.toNumber(),
+        balanceOfLender.toNumber(),
+        'Balance of lender increase after borrower repay'
+      );
+
+      // Check borrower's eth
+      const balanceEthOfBorrowerAfter = Number(await web3.eth.getBalance(_borrower));
+      assert.isBelow(
+        balanceEthOfBorrowerAfter,
+        balanceEthOfBorrower,
+        'Balance ETH of borrower decrease after repay'
+      );
     });
   });
   
