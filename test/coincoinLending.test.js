@@ -115,13 +115,22 @@ contract('CoinCoinLending', (accounts) => {
       });
 
       truffleAssert.eventEmitted(tx, 'OfferTaken', (ev) => {
-        console.log(ev._amountETH.toString());
-        console.log(new Date(Number(ev._loanExpDate.toString()) * 1000));
+        // console.log(ev._amountETH.toString());
+        // console.log(new Date(Number(ev._loanExpDate.toString()) * 1000));
         return true;
       });
 
-      const offer = await coincoinLendingInstance.
+      // Check offer after borrower borrow
+      const offer = await coincoinLendingInstance.getOfferInfo(_offerId);
+      const offerId = offer['0'];
+      const borrower = offer['1'];
+      const isTaken = offer['2'];
+      const loanExpDate = offer['3'];
 
+      assert.equal(offerId, _offerId);
+      assert.equal(borrower, _borrower);
+      assert.equal(isTaken, true);
+      assert.isNotNull(new Date(Number(loanExpDate.toString()) * 1000));
     });
   });
   

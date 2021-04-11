@@ -12,6 +12,7 @@ contract CoinCoinLending {
         uint256 dailyInterestRate;
         address creator;
         bool isTaken;
+        address borrower;
         uint256 currentInterest;
         uint256 loanExpDate; // Ngày hết hạn vay
     }
@@ -61,6 +62,7 @@ contract CoinCoinLending {
             dailyInterestRate: _dailyInterestRate,
             creator: msg.sender,
             isTaken: false,
+            borrower: msg.sender, // TODO: change to inital value
             currentInterest: 0,
             loanExpDate: 0
         });
@@ -77,6 +79,7 @@ contract CoinCoinLending {
 
         myOffer.isTaken = true;
         myOffer.loanExpDate = block.timestamp + myOffer.duration;
+        myOffer.borrower = msg.sender;
 
         emit OfferTaken(_id, msg.sender, msg.value, myOffer.loanExpDate);
     }
@@ -88,5 +91,23 @@ contract CoinCoinLending {
 
     function getInterest(uint256 _id) public view returns (uint256) {
         return offer[_id].currentInterest;
+    }
+
+    function getOfferInfo(uint256 _id)
+        public
+        view
+        returns (
+            uint256,
+            address,
+            bool,
+            uint256
+        )
+    {
+        return (
+            _id,
+            offer[_id].borrower,
+            offer[_id].isTaken,
+            offer[_id].loanExpDate
+        );
     }
 }
