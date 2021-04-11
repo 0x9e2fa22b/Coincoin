@@ -105,13 +105,31 @@ contract('CoinCoinLending', (accounts) => {
   });
 
   describe('function borrow()', () => {
+    it('should error if borrower does not have enough ETH', async () => {
+      const _offerId = 0;
+      const _borrower = accounts[1];
+      const _amountETH = 0;
+
+      return truffleAssert.reverts(
+        coincoinLendingInstance.borrow(
+          _offerId,
+          {
+            from: _borrower,
+            value: web3Utils.toWei(`${_amountETH}`, 'ether')
+          }
+        ),
+        'You do not have enough ETH'
+      );
+    });
+
     it('should borrow success', async () => {
       const _offerId = 0;
       const _borrower = accounts[1];
+      const _amountETH = 1;
 
       const tx = await coincoinLendingInstance.borrow(_offerId, {
         from: _borrower,
-        value: web3Utils.toWei('1', 'ether')
+        value: web3Utils.toWei(`${_amountETH}`, 'ether')
       });
 
       truffleAssert.eventEmitted(tx, 'OfferTaken', (ev) => {
@@ -131,6 +149,23 @@ contract('CoinCoinLending', (accounts) => {
       assert.equal(borrower, _borrower);
       assert.equal(isTaken, true);
       assert.isNotNull(new Date(Number(loanExpDate.toString()) * 1000));
+    });
+
+    it('should error if offer was borrowed', async () => {
+      const _offerId = 0;
+      const _borrower = accounts[2];
+      const _amountETH = 1;
+      
+      return truffleAssert.reverts(
+        coincoinLendingInstance.borrow(
+          _offerId,
+          {
+            from: _borrower,
+            value: web3Utils.toWei(`${_amountETH}`, 'ether')
+          }
+        ),
+        'Offer was borrowed'
+      );
     });
   });
   
