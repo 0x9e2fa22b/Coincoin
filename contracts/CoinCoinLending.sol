@@ -73,15 +73,22 @@ contract CoinCoinLending {
     }
 
     function borrow(uint256 _id) public payable {
+        address _borrower = msg.sender;
         Offer storage myOffer = offer[_id];
+
         require(myOffer.isTaken == false, "Offer was borrowed");
         require(msg.value >= myOffer.amountETH, "You do not have enough ETH"); //TODO: Nếu người dùng gửi nhiều ETH hơn yêu cầu thì trả lại tiền thừa
 
+        CoinCoinInterface(coincoinContractAddress).transferForBorrower(
+            _borrower,
+            myOffer.amount
+        );
+
         myOffer.isTaken = true;
         myOffer.loanExpDate = block.timestamp + myOffer.duration;
-        myOffer.borrower = msg.sender;
+        myOffer.borrower = _borrower;
 
-        emit OfferTaken(_id, msg.sender, msg.value, myOffer.loanExpDate);
+        emit OfferTaken(_id, _borrower, msg.value, myOffer.loanExpDate);
     }
 
     //TODO: Update
@@ -100,6 +107,7 @@ contract CoinCoinLending {
             uint256,
             address,
             bool,
+            uint256,
             uint256
         )
     {
@@ -107,7 +115,8 @@ contract CoinCoinLending {
             _id,
             offer[_id].borrower,
             offer[_id].isTaken,
-            offer[_id].loanExpDate
+            offer[_id].loanExpDate,
+            offer[_id].amount
         );
     }
 }

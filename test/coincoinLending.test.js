@@ -2,7 +2,10 @@ const CoinCoin = artifacts.require('CoinCoin');
 const CoinCoinLending = artifacts.require('CoinCoinLending');
 const truffleAssert = require('truffle-assertions');
 const { assert } = require('chai');
+const Web3 = require('web3');
 const web3Utils = require('web3-utils');
+
+const web3 = new Web3('http://127.0.0.1:8545');
 
 let coincoinLendingInstance;
 let coincoinInstance;
@@ -127,15 +130,13 @@ contract('CoinCoinLending', (accounts) => {
       const _borrower = accounts[1];
       const _amountETH = 1;
 
+      // Check lending contract receive eth
+      const balanceEthOfContract = Number(await web3.eth.getBalance(coincoinLendingInstance.address));
+      const balanceOfBorrower = Number(await coincoinInstance.getBalance(_borrower));
+
       const tx = await coincoinLendingInstance.borrow(_offerId, {
         from: _borrower,
         value: web3Utils.toWei(`${_amountETH}`, 'ether')
-      });
-
-      truffleAssert.eventEmitted(tx, 'OfferTaken', (ev) => {
-        // console.log(ev._amountETH.toString());
-        // console.log(new Date(Number(ev._loanExpDate.toString()) * 1000));
-        return true;
       });
 
       // Check offer after borrower borrow
@@ -144,11 +145,36 @@ contract('CoinCoinLending', (accounts) => {
       const borrower = offer['1'];
       const isTaken = offer['2'];
       const loanExpDate = offer['3'];
+      const amountOfBorrow = Number(offer['4']);
 
       assert.equal(offerId, _offerId);
       assert.equal(borrower, _borrower);
       assert.equal(isTaken, true);
       assert.isNotNull(new Date(Number(loanExpDate.toString()) * 1000));
+
+      // Check lending contract receive eth
+      const balanceEthOfContractAfter = await web3.eth.getBalance(coincoinLendingInstance.address);
+      assert.equal(
+        balanceEthOfContractAfter,
+        balanceEthOfContract + Number(web3Utils.toWei(`${_amountETH}`, 'ether')),
+        'Lending contract increase ETH'
+      );
+
+      // Check borrower receive coin
+      const balanceOfBorrowerAfter = Number(await coincoinInstance.getBalance(_borrower));
+      assert.equal(
+        balanceOfBorrowerAfter,
+        balanceOfBorrower + amountOfBorrow,
+        'Borrower increase coin'
+      );
+
+      // Check event
+      truffleAssert.eventEmitted(tx, 'OfferTaken', (ev) => {
+        return ev._id.toNumber() === 0
+          && ev._borrower === _borrower
+          && ev._amountETH.toString() === web3Utils.toWei(`${_amountETH}`, 'ether')
+          && new Date(Number(ev._loanExpDate.toString()) * 1000) instanceof Date;
+      });
     });
 
     it('should error if offer was borrowed', async () => {
