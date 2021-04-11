@@ -7,5 +7,5 @@ interface CoinCoinInterface {
         uint256 _amount
     ) external;
 
-    function transferForBorrower(address _borrower, uint256 _amount) external;
+    function transferToAddress(address _borrower, uint256 _amount) external;
 }

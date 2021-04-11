@@ -38,7 +38,7 @@ contract('CoinCoinLending', (accounts) => {
       const _lender = accounts[0];
       const _amount = 1000;
       const _ltvRate = 1000; // Loan to rate: Coin <-> ETH
-      const _duration = 86400; // 1 day
+      const _duration = 1296000; // 15 days
       const _dailyInterestRate = 2; // 0.2% per day
 
       // Step 1: Mint for _lender (mint >= _amount)
@@ -192,6 +192,95 @@ contract('CoinCoinLending', (accounts) => {
         ),
         'Offer was borrowed'
       );
+    });
+  });
+
+  describe('function getInterest()', () => {
+    it('should interest = 0', async () => {
+      const _offerId = 0;
+      const interest = await coincoinLendingInstance.getInterest(_offerId);
+      assert.equal(interest, 0);
+    });
+  });
+
+  describe('function repay()', () => {
+    it('should erorr if is not borrower', () => {
+      const _offerId = 0;
+      const _borrower = accounts[8];
+
+      return truffleAssert.reverts(
+        coincoinLendingInstance.repay(_offerId, {
+            from: _borrower
+          }
+        ),
+        'You are not borrower'
+      );
+    });
+
+    it('should error if borrower does not enough money', async () => {
+      const _lender = accounts[2];
+      const _borrower = accounts[3];
+      const _offerId = 1;
+      const _amount = 10000;
+      const _amountETH = 1;
+
+      // Step 1: Mint for _lender
+      await coincoinInstance.mint(_lender, _amount, {
+        from: ownerAddress
+      });
+
+      // Step 2: Create offer
+      await coincoinLendingInstance.createOffer(
+        _amount,
+        _ltvRate = 10000,
+        _duration = 1,
+        _dailyInterestRate = 1,
+        {
+          from: _lender
+        }
+      );
+
+      // Step 3: _borrower borrow offer (id = 1)
+      await coincoinLendingInstance.borrow(_offerId, {
+        from: _borrower,
+        value: web3Utils.toWei(`${_amountETH}`, 'ether')
+      });
+
+      // Step 4: Minus balance _borrower
+      await coincoinInstance.transfer(_lender, _amount, {
+        from: _borrower
+      });
+
+      // Step 5: _borrower repay offer (id = 1)
+      return truffleAssert.reverts(
+        coincoinLendingInstance.repay(_offerId, {
+            from: _borrower,
+          }
+        ),
+        'You do not have enough money'
+      );
+    });
+
+    it('should repay success', async () => {
+      const _offerId = 0;
+      const _lender = accounts[0];
+      const _borrower = accounts[1];
+
+      const balanceEthOfBorrower = await web3.eth.getBalance(_borrower);
+      console.log(balanceEthOfBorrower)
+      
+      const tx = await coincoinLendingInstance.repay(_offerId, {
+        from: _borrower
+      });
+
+      const balanceEthOfBorrowerAfter = await web3.eth.getBalance(_borrower);
+      console.log(balanceEthOfBorrowerAfter)
+
+
+      // Check event
+      truffleAssert.eventEmitted(tx, 'OfferRepaid', (ev) => {
+        return ev._id.toNumber() === _offerId;
+      });
     });
   });
   

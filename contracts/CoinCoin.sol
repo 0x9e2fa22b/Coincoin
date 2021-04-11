@@ -60,10 +60,10 @@ contract CoinCoin {
         _send(_sender, coincoinLendingContract, _amount);
     }
 
-    function transferForBorrower(address _borrower, uint256 _amount)
+    function transferToAddress(address _address, uint256 _amount)
         public
         onlyCoinCoinLendingContract
     {
-        _send(coincoinLendingContract, _borrower, _amount);
+        _send(coincoinLendingContract, _address, _amount);
     }
 }
