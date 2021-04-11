@@ -2,6 +2,7 @@ const CoinCoin = artifacts.require('CoinCoin');
 const CoinCoinLending = artifacts.require('CoinCoinLending');
 const truffleAssert = require('truffle-assertions');
 const { assert } = require('chai');
+const web3Utils = require('web3-utils');
 
 let coincoinLendingInstance;
 let coincoinInstance;
@@ -57,7 +58,11 @@ contract('CoinCoinLending', (accounts) => {
 
       // Check event
       truffleAssert.eventEmitted(tx, 'OfferCreated', (ev) => {
-        return ev._id.toNumber() === 0;
+        return ev._id.toNumber() === 0
+          && ev._amount.toNumber() === _amount
+          && ev._ltvRate.toNumber() === _ltvRate
+          && ev._amountETH.toNumber() === (_amount / _ltvRate)
+          && ev._creator === _lender;
       });
 
       // Check balance of _lender after create offer
@@ -97,7 +102,27 @@ contract('CoinCoinLending', (accounts) => {
         'You do not have enough money'
       );
     });
+  });
 
-    
-  })
+  describe('function borrow()', () => {
+    it('should borrow success', async () => {
+      const _offerId = 0;
+      const _borrower = accounts[1];
+
+      const tx = await coincoinLendingInstance.borrow(_offerId, {
+        from: _borrower,
+        value: web3Utils.toWei('1', 'ether')
+      });
+
+      truffleAssert.eventEmitted(tx, 'OfferTaken', (ev) => {
+        console.log(ev._amountETH.toString());
+        console.log(new Date(Number(ev._loanExpDate.toString()) * 1000));
+        return true;
+      });
+
+      const offer = await coincoinLendingInstance.
+
+    });
+  });
+  
 });
