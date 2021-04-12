@@ -301,6 +301,19 @@ contract('CoinCoinLending', (accounts) => {
         'Balance ETH of borrower decrease after repay'
       );
     });
+
+    it('should error if offer have been repaid', async () => {
+      const _offerId = 0;
+      const _borrower = accounts[1];
+
+      return truffleAssert.reverts(
+        coincoinLendingInstance.repay(_offerId, {
+            from: _borrower
+          }
+        ),
+        'Offer have been repaid'
+      );
+    });
   });
   
 });

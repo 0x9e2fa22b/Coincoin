@@ -16,6 +16,7 @@ contract CoinCoinLending {
         address borrower;
         uint256 loanDate; // Ngày vay
         uint256 loanExpDate; // Ngày hết hạn vay
+        bool isRepay;
     }
 
     CoinCoin public coincoin;
@@ -67,7 +68,8 @@ contract CoinCoinLending {
             isTaken: false,
             borrower: msg.sender, // TODO: change to inital value
             loanDate: 0,
-            loanExpDate: 0
+            loanExpDate: 0,
+            isRepay: false
         });
 
         emit OfferCreated(_id, _amount, _ltvRate, _amountETH, msg.sender);
@@ -98,6 +100,7 @@ contract CoinCoinLending {
     function repay(uint256 _id) public {
         Offer storage myOffer = offer[_id];
         require(msg.sender == myOffer.borrower, "You are not borrower");
+        require(myOffer.isRepay == false, "Offer have been repaid");
 
         uint256 totalAmount;
         if (block.timestamp - myOffer.loanDate >= myOffer.loanExpDate) {
@@ -108,6 +111,8 @@ contract CoinCoinLending {
                 getInterest(_id) +
                 ((myOffer.amount * 5) / 100);
         }
+
+        offer[_id].isRepay = true;
 
         // Borrower tra coin cho contract
         CoinCoinInterface(coincoinContractAddress)
